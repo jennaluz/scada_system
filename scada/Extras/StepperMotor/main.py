@@ -92,8 +92,11 @@ class ClickPLC:
         self.client.write_coil(coil_addr, value)
 
     def loop(self):
+        self.connect()
+
         while True:
             (self.e_stop.value, self.in_hand.value, self.in_auto.value) = self.read_coils(self.e_stop.address, 3)
+            self.write_coil(self.hmi_e_stop_lamp.address, self.e_stop.value)
 
             # The EStop and Motor Enable are active low
             if (self.e_stop.value is False):
@@ -112,7 +115,8 @@ class ClickPLC:
 
             # Turn the stepper motor clockwise
             if self.in_auto.value is True:
-                self.write_coil(motor_dir.address, False)
+                self.write_coil(self.motor_ena.address, False)
+                self.write_coil(self.motor_dir.address, False)
 
                 self.write_coil(self.motor_pulse.address, True)
                 time.sleep(0.001)
@@ -156,7 +160,6 @@ class ClickPLC:
 
 def main():
     click_plc = ClickPLC('192.168.3.10', 502)
-    click_plc.connect()
     click_plc.loop()
 
 
