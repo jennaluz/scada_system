@@ -91,6 +91,26 @@ class ClickPLC:
 
         self.client.write_coil(coil_addr, value)
 
+    def get_state(self):
+        state = {}
+
+        state[self.e_stop.name] = self.e_stop.value
+        state[self.in_hand.name] = self.in_hand.value
+        state[self.in_auto.name] = self.in_auto.value
+
+        state[self.motor_pulse.name] = self.motor_pulse.value
+        state[self.motor_dir.name] = self.motor_dir.value
+        state[self.motor_ena.name] = self.motor_ena.value
+
+        return state
+
+    def cache_state(self):
+        filename = "data.json"
+        state = self.get_state()
+
+        with open(filename, 'w') as file:
+            json.dump(state, file)
+
     def loop(self):
         self.connect()
 
@@ -102,58 +122,71 @@ class ClickPLC:
             if (self.e_stop.value is False):
                 # The EStop button is pressed
                 # Stop the stepper motor from running
-                self.write_coil(self.motor_pulse.address, True)
+                self.write_coil(self.motor_pulse.address, False)
                 self.write_coil(self.motor_ena.address, True)
+
+                self.motor_pulse.value = False
+                self.motor_ena.value = True
 
                 self.write_coil(self.hmi_in_hand_lamp.address, False)
                 self.write_coil(self.hmi_in_auto_lamp.address, False)
             else:
                 # The EStop button is not pressed
                 self.write_coil(self.motor_ena.address, False)
+
+                self.motor_ena.value = False
+
                 self.write_coil(self.hmi_in_hand_lamp.address, self.in_hand.value)
                 self.write_coil(self.hmi_in_auto_lamp.address, self.in_auto.value)
 
-            # Turn the stepper motor clockwise
-            if self.in_auto.value is True:
-                self.write_coil(self.motor_ena.address, False)
-                self.write_coil(self.motor_dir.address, False)
-
-                self.write_coil(self.motor_pulse.address, True)
-                time.sleep(0.001)
-                self.write_coil(self.motor_pulse.address, False)
-                time.sleep(0.005)
-
-            # Listen for HMI input
-            if self.in_hand.value is True:
-                (self.hmi_dir_cw.value, self.hmi_dir_ccw.value) = self.read_coils(self.hmi_dir_cw.address, 2)
-
-                if self.hmi_dir_cw.value is True:
+                # Turn the stepper motor clockwise
+                if self.in_auto.value is True:
+                    self.write_coil(self.motor_ena.address, False)
                     self.write_coil(self.motor_dir.address, False)
 
-                    self.write_coil(self.motor_pulse.address, True)
-                    time.sleep(0.001)
-                    self.write_coil(self.motor_pulse.address, False)
-                    time.sleep(0.005)
-
-                    # Write the value if the EStop button is not pressed
-                    if self.e_stop.value is True:
-                        self.write_coil(self.hmi_dir_cw_lamp.address, True)
-                else:
-                    self.write_coil(self.hmi_dir_cw_lamp.address, False)
-
-                if self.hmi_dir_ccw.value is True:
-                    self.write_coil(self.motor_dir.address, True)
+                    self.motor_ena.value = False
+                    self.motor_dir.value = False
 
                     self.write_coil(self.motor_pulse.address, True)
                     time.sleep(0.001)
                     self.write_coil(self.motor_pulse.address, False)
                     time.sleep(0.005)
 
-                    # Write the value if the EStop button is not pressed
-                    if self.e_stop.value is True:
-                        self.write_coil(self.hmi_dir_ccw_lamp.address, True)
-                else:
-                    self.write_coil(self.hmi_dir_ccw_lamp.address, False)
+                # Listen for HMI input
+                if self.in_hand.value is True:
+                    (self.hmi_dir_cw.value, self.hmi_dir_ccw.value) = self.read_coils(self.hmi_dir_cw.address, 2)
+
+                    if self.hmi_dir_cw.value is True:
+                        self.write_coil(self.motor_dir.address, False)
+
+                        self.write_coil(self.motor_pulse.address, True)
+                        time.sleep(0.001)
+                        self.write_coil(self.motor_pulse.address, False)
+                        time.sleep(0.005)
+
+                        # Write the value if the EStop button is not pressed
+                        if self.e_stop.value is True:
+                            self.write_coil(self.hmi_dir_cw_lamp.address, True)
+                    else:
+                        self.write_coil(self.hmi_dir_cw_lamp.address, False)
+
+                    if self.hmi_dir_ccw.value is True:
+                        self.write_coil(self.motor_dir.address, True)
+
+                        self.write_coil(self.motor_pulse.address, True)
+                        time.sleep(0.001)
+                        self.write_coil(self.motor_pulse.address, False)
+                        time.sleep(0.005)
+
+                        self.motor_pulse.value = False
+
+                        # Write the value if the EStop button is not pressed
+                        if self.e_stop.value is True:
+                            self.write_coil(self.hmi_dir_ccw_lamp.address, True)
+                    else:
+                        self.write_coil(self.hmi_dir_ccw_lamp.address, False)
+
+            self.cache_state()
 
         self.disconnect()
 
