@@ -7,35 +7,51 @@
 {% block page_buttons %}{% endblock %}
 
 {% block content %}
-<table class="table table-hover">
+
+{{ detect_red }}
+<table id="tag-table" class="table table-hover">
   <thead>
     <tr>
-      <th scope="col">#</th>
-      <th scope="col">First</th>
-      <th scope="col">Last</th>
-      <th scope="col">Handle</th>
+      <th scope="col">Tags</th>
+      <th scope="col">Value</th>
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
-    </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td colspan="2">Larry the Bird</td>
-      <td>@twitter</td>
-    </tr>
+    {% for key, value in new_state.items %}
+	<tr>
+	  <td>{{key}}</td>
+	  {% if key != "Color Sensor" %}
+	    {% if key != "Timestamp" and value%}
+	      <td class="table-success">{{value}}</td>
+	    {% else %}
+	      <td>{{value}}</td>
+	    {% endif %}
+	  {% else %}
+	    {% if detected_white %}
+	      <td class="table-secondary">{{value}}</td>
+	    {% elif detected_red %}
+	      <td class="table-danger">{{value}}</td>
+	    {% elif detected_blue %}
+	      <td class="table-primary">{{value}}</td>
+	    {% else %}
+	      <td>{{value}}</td>
+	    {% endif %}
+	  {% endif %}
+	</tr>
+    {% endfor %}
   </tbody>
 </table>
 {% endblock %}
 
-{% block page_scripts %}{% endblock %}
+{% block page_scripts %}
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+    $( document ).ready(function() {
+	setInterval(function() {
+	    $("#tag-table").load(" #tag-table")
+	}, 100);
+    });
+</script>
+
+{% endblock %}

@@ -7,35 +7,34 @@
 {% block page_buttons %}{% endblock %}
 
 {% block content %}
-<table class="table table-hover">
+
+<table id="tag-table" class="table table-hover">
   <thead>
     <tr>
-      <th scope="col">#</th>
+      <th scope="col">Tags</th>
       <th scope="col">First</th>
-      <th scope="col">Last</th>
-      <th scope="col">Handle</th>
     </tr>
   </thead>
   <tbody>
+    {% for key, value in newState.items %}
     <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
+       <td>{{key}}</td>
+       <td>{{value}}</td>
     </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td colspan="2">Larry the Bird</td>
-      <td>@twitter</td>
-    </tr>
+    {% endfor %}
   </tbody>
 </table>
 {% endblock %}
 
-{% block page_scripts %}{% endblock %}
+{% block page_scripts %}
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+    $( document ).ready(function() {
+	setInterval(function() {
+	    $("#tag-table").load(" #tag-table")
+	}, 2000);
+    });
+</script>
+
+{% endblock %}

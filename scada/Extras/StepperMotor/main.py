@@ -1,5 +1,6 @@
 from enum import IntEnum
 from pymodbus.client import ModbusTcpClient
+from datetime import datetime
 import json
 import time
 
@@ -55,7 +56,7 @@ class ClickPLC:
     # Disconnect from the ClickPLC
     def disconnect(self):
         if self.connected:
-            print('Disconnecting to Click PLC...')
+            print('Disconnecting from Click PLC...')
             self.client.close()
 
         print('Disconnected from Click PLC.')
@@ -94,6 +95,13 @@ class ClickPLC:
     def get_state(self):
         state = {}
 
+
+        return state
+
+    def cache_state(self):
+        filename = "data.json"
+        state = {}
+
         state[self.e_stop.name] = self.e_stop.value
         state[self.in_hand.name] = self.in_hand.value
         state[self.in_auto.name] = self.in_auto.value
@@ -102,11 +110,7 @@ class ClickPLC:
         state[self.motor_dir.name] = self.motor_dir.value
         state[self.motor_ena.name] = self.motor_ena.value
 
-        return state
-
-    def cache_state(self):
-        filename = "data.json"
-        state = self.get_state()
+        state["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         with open(filename, 'w') as file:
             json.dump(state, file)
